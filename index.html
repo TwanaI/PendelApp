@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pendelapp</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="card">
+    <h1>Pendelapp</h1>
+    <p class="muted">Visar bara nästa två pendeltåg i dina två riktningar.</p>
+
+    <section id="status" class="status">Startar…</section>
+
+    <section class="current">
+      <div>
+        <span class="label">Sträckor</span>
+        <strong>Jordbro ↔ Stockholm Södra</strong>
+      </div>
+      <button id="refreshButton">Uppdatera</button>
+    </section>
+
+    <section class="route">
+      <span class="label">Jordbro → Stockholm Södra</span>
+      <h2>Nästa två tåg</h2>
+      <div id="jordbroToSodra" class="departures"></div>
+    </section>
+
+    <section class="route">
+      <span class="label">Stockholm Södra → Jordbro</span>
+      <h2>Nästa två tåg</h2>
+      <div id="sodraToJordbro" class="departures"></div>
+    </section>
+
+    <p class="credit">Data från Trafiklab / SL Transport API.</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
