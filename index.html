@@ -9,7 +9,7 @@
 <body>
   <main class="card">
     <h1>Pendelapp</h1>
-    <p class="muted">Visar bara nästa två pendeltåg i dina två riktningar.</p>
+    <p class="muted">Visar nästa tre pendeltågsavgångar i dina två riktningar.</p>
 
     <section id="status" class="status">Startar…</section>
 
@@ -21,16 +21,14 @@
       <button id="refreshButton">Uppdatera</button>
     </section>
 
-    <section class="route">
-      <span class="label">Jordbro → Stockholm Södra</span>
-      <h2>Nästa två tåg</h2>
-      <div id="jordbroToSodra" class="departures"></div>
+    <section id="jordbroCard" class="card">
+      <h2>Jordbro → Stockholm Södra</h2>
+      <div id="jordbroToSodra"></div>
     </section>
 
-    <section class="route">
-      <span class="label">Stockholm Södra → Jordbro</span>
-      <h2>Nästa två tåg</h2>
-      <div id="sodraToJordbro" class="departures"></div>
+    <section id="sodraCard" class="card">
+      <h2>Stockholm Södra → Jordbro</h2>
+      <div id="sodraToJordbro"></div>
     </section>
 
     <p class="credit">Data från Trafiklab / SL Transport API.</p>

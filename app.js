@@ -40,6 +40,7 @@ const statusEl = document.getElementById("status");
 const refreshButton = document.getElementById("refreshButton");
 
 let sitesCache = null;
+let activeRoute = null;
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -83,7 +84,7 @@ async function getCurrentPosition() {
 }
 
 
-// Bestämmer riktignin
+// Bestämmer station
 // Läser in position, jämför med koordinater för stationer
 async function getActiveRoute() {
 
@@ -110,6 +111,16 @@ async function getActiveRoute() {
   }
 
   return null;
+}
+
+
+// Uppdaterar endast en ruta
+function showOnlyRoute(routeKey) {
+  document.getElementById("jordbroCard").style.display =
+    routeKey === "jordbro" ? "block" : "none";
+
+  document.getElementById("sodraCard").style.display =
+    routeKey === "sodra" ? "block" : "none";
 }
 
 // Hämtar alla stationer
@@ -260,14 +271,15 @@ async function refresh() {
   try {
     setStatus("Hämtar avgångar…");
     //await Promise.all(ROUTES.map(loadRoute));
-    const active = await getActiveRoute();
-    if (active === "jordbro") {
+    
+    if (activeRoute === "jordbro") {
+      showOnlyRoute("jordbro");
       await loadRoute(ROUTES[0]);
 
       document.getElementById("sodraToJordbro").style.display = "none";
     }
-
-    else if (active === "sodra") {
+    else if (activeRoute === "sodra") {
+      showOnlyRoute("sodra");
       await loadRoute(ROUTES[1]);
 
       document.getElementById("jordbroToSodra").style.display = "none";
@@ -278,6 +290,14 @@ async function refresh() {
   }
 }
 
+async function getClosestStation() {
+  const active = await getActiveRoute();
+  activeRoute = active || "jordbro"; // fallback om GPS misslyckas/är långt bort
+
+
+}
+
 refreshButton.addEventListener("click", refresh);
+getClosestStation()
 refresh();
 setInterval(refresh, 30000);
