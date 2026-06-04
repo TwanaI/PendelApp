@@ -25,6 +25,17 @@ const ROUTES = [
   },
 ];
 
+const STATIONS = {
+  jordbro: {
+    lat: 59.1427,
+    lon: 18.1336
+  },
+  sodra: {
+    lat: 59.3133,
+    lon: 18.0750
+  }
+};
+
 const statusEl = document.getElementById("status");
 const refreshButton = document.getElementById("refreshButton");
 
@@ -43,6 +54,68 @@ function normalize(text) {
     .replaceAll("ö", "o");
 }
 
+// Distance to coordinates
+// Returnes distance between two coordinates on a map.
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Read possition
+// Gets position from 
+async function getCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve(pos),
+      err => reject(err)
+    );
+  });
+}
+
+
+// Bestämmer riktignin
+// Läser in position, jämför med koordinater för stationer
+async function getActiveRoute() {
+
+  const pos = await getCurrentPosition();
+
+  const lat = pos.coords.latitude;
+  const lon = pos.coords.longitude;
+
+  const jordbroDistance =
+    distanceKm(lat, lon,
+      STATIONS.jordbro.lat,
+      STATIONS.jordbro.lon);
+
+  const sodraDistance =
+    distanceKm(lat, lon,
+      STATIONS.sodra.lat,
+      STATIONS.sodra.lon);
+
+  if (jordbroDistance < sodraDistance) {
+    return "jordbro";
+  }
+  else {
+    return "sodra";
+  }
+
+  return null;
+}
+
+// Hämtar alla stationer
+// ${SL_BASE}/sites?expand=true returnerar en lång lista med alla stationer med position. 
+// Jordbro, id: 9729
+// Stockholm södra, id: 9530,
 async function getSites() {
   if (sitesCache) return sitesCache;
   const response = await fetch(`${SL_BASE}/sites?expand=true`);
@@ -51,6 +124,9 @@ async function getSites() {
   return sitesCache;
 }
 
+
+// Sorterar ut stations ID
+// Går igneom listan med alla stationer från SL och sorterar ut Stockholm södra och Jordbro station.
 async function findSiteId(stationName) {
   const sites = await getSites();
   const list = Array.isArray(sites) ? sites : (sites.sites || sites.data || []);
@@ -64,6 +140,9 @@ async function findSiteId(stationName) {
   return site.id;
 }
 
+
+// Hämtar departures
+// Hämtar en lång lista med alla avgångar från SL, buss och pendeltåg åt alla håll.s
 async function getDepartures(siteId) {
   const response = await fetch(`${SL_BASE}/sites/${siteId}/departures`);
   if (!response.ok) throw new Error(`Kunde inte hämta avgångar från SL (${response.status}).`);
@@ -71,6 +150,7 @@ async function getDepartures(siteId) {
   return data.departures || [];
 }
 
+// Bygger ihop flera fält från en avgång till en enda sökbar text.
 function departureText(dep) {
   return normalize([
     dep.destination,
@@ -109,6 +189,8 @@ function minutesUntil(value) {
   return Math.max(0, Math.round((date.getTime() - Date.now()) / 60000));
 }
 
+
+// Filtrerar bort buss, tunnelbana osv.
 function isCommuterTrain(dep) {
   const text = departureText(dep);
   const mode = normalize(dep.line?.transport_mode || dep.transport_mode || dep.transport?.mode);
@@ -143,7 +225,7 @@ function renderRoute(route, departures) {
   })
   .filter(dep => matchesRoute(dep, route))
   .sort(compareDepartures)
-  .slice(0, 2);
+  .slice(0, 3);
 
   container.innerHTML = "";
 
@@ -177,7 +259,19 @@ async function loadRoute(route) {
 async function refresh() {
   try {
     setStatus("Hämtar avgångar…");
-    await Promise.all(ROUTES.map(loadRoute));
+    //await Promise.all(ROUTES.map(loadRoute));
+    const active = await getActiveRoute();
+    if (active === "jordbro") {
+      await loadRoute(ROUTES[0]);
+
+      document.getElementById("sodraToJordbro").style.display = "none";
+    }
+
+    else if (active === "sodra") {
+      await loadRoute(ROUTES[1]);
+
+      document.getElementById("jordbroToSodra").style.display = "none";
+    }
     setStatus(`Uppdaterad ${new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`);
   } catch (err) {
     setStatus(err.message);
