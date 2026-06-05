@@ -178,6 +178,22 @@ function departureTime(dep) {
   return dep.expected || dep.scheduled || dep.display_time || dep.time || dep.departure_time;
 }
 
+
+// Beräknar hur sen tåget är.
+function delayMinutes(dep) {
+
+  if (!dep.scheduled || !dep.expected) {
+    return 0;
+  }
+
+  const scheduled = new Date(dep.scheduled);
+  const expected = new Date(dep.expected);
+
+  return Math.round(
+    (expected.getTime() - scheduled.getTime()) / 60000
+  );
+}
+
 function formatClock(value) {
   if (!value) return "?";
   if (/^\d{1,2}:\d{2}/.test(value)) return value.slice(0, 5);
@@ -246,7 +262,9 @@ function renderRoute(route, departures) {
   }
 
   for (const dep of filtered) {
+    console.log(JSON.stringify(dep, null, 2));
     const timeValue = departureTime(dep);
+    const delay = delayMinutes(dep);
     const minutes = minutesUntil(timeValue);
     const destination = dep.destination || dep.direction || dep.direction_name || "okänd destination";
     const line = dep.line?.designation || dep.line?.name || "Pendeltåg";
@@ -254,9 +272,16 @@ function renderRoute(route, departures) {
     const div = document.createElement("div");
     div.className = "departure";
     div.innerHTML = `
-      <div class="time">${formatClock(timeValue)}${minutes !== null ? `<span class="badge">om ${minutes} min</span>` : ""}</div>
-      <div class="meta">${line} mot ${destination}</div>
-    `;
+    <div class="time">
+      ${formatClock(timeValue)}
+      ${minutes !== null ? `
+        <span class="badge ${delay > 0 ? "delayed" : ""}">
+          om ${minutes} min${delay > 0 ? ` (+${delay} minuter)` : ""}
+        </span>
+      ` : ""}
+    </div>
+    <div class="meta">${line} mot ${destination}</div>
+`;
     container.appendChild(div);
   }
 }

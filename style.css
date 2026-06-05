@@ -23,6 +23,11 @@ body {
   box-shadow: 0 16px 50px rgba(0, 0, 0, 0.12);
 }
 
+.badge.delayed {
+  background: #facc15;
+  color: #1f2937;
+}
+
 h1 {
   margin: 0 0 4px;
   font-size: 30px;
