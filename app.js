@@ -241,6 +241,10 @@ function compareDepartures(a, b) {
   return String(at).localeCompare(String(bt));
 }
 
+function isCancelled(dep) {
+  return dep.state !== "EXPECTED";
+}
+
 function renderRoute(route, departures) {
   const container = document.getElementById(route.elementId);
 
@@ -266,22 +270,26 @@ function renderRoute(route, departures) {
     const timeValue = departureTime(dep);
     const delay = delayMinutes(dep);
     const minutes = minutesUntil(timeValue);
+    const cancelled = isCancelled(dep);
     const destination = dep.destination || dep.direction || dep.direction_name || "okänd destination";
     const line = dep.line?.designation || dep.line?.name || "Pendeltåg";
-
     const div = document.createElement("div");
     div.className = "departure";
     div.innerHTML = `
-    <div class="time">
-      ${formatClock(timeValue)}
-      ${minutes !== null ? `
-        <span class="badge ${delay > 0 ? "delayed" : ""}">
-          om ${minutes} min${delay > 0 ? ` (+${delay} minuter)` : ""}
-        </span>
-      ` : ""}
-    </div>
-    <div class="meta">${line} mot ${destination}</div>
-`;
+      <div class="time">
+        ${formatClock(timeValue)}
+        ${
+          cancelled
+            ? `<span class="badge cancelled">INSTÄLLT</span>`
+            : minutes !== null
+              ? `<span class="badge ${delay > 0 ? "delayed" : ""}">
+                  om ${minutes} min${delay > 0 ? ` (+${delay} minuter)` : ""}
+                </span>`
+              : ""
+        }
+      </div>
+      <div class="meta">${line} mot ${destination}</div>
+    `;
     container.appendChild(div);
   }
 }
